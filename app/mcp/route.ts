@@ -69,6 +69,7 @@ const handler = createMcpHandler(async (server) => {
     })
   );
 
+  // use to register tools from MCP
   server.registerTool(
     contentWidget.id,
     {
@@ -92,7 +93,7 @@ const handler = createMcpHandler(async (server) => {
           name: name,
           timestamp: new Date().toISOString(),
         },
-        _meta: widgetMeta(contentWidget),
+        _meta: widgetMeta(contentWidget), // is this the UI?
       };
     }
   );
