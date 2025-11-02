@@ -30,6 +30,7 @@ function widgetMeta(widget: ContentWidget) {
 
 const handler = createMcpHandler(async (server) => {
   const html = await getAppsSdkCompatibleHtml(baseURL, "/");
+  const abcHtml = await getAppsSdkCompatibleHtml(baseURL, "/abc");
 
   const contentWidget: ContentWidget = {
     id: "show_content",
@@ -41,6 +42,18 @@ const handler = createMcpHandler(async (server) => {
     description: "Displays the homepage content",
     widgetDomain: "https://nextjs.org/docs",
   };
+
+  const abcWidget: ContentWidget = {
+    id: "retrieve_abc",
+    title: "Retrieve ABC",
+    templateUri: "ui://widget/abc-template.html",
+    invoking: "Retrieving ABC data...",
+    invoked: "ABC data retrieved",
+    html: abcHtml,
+    description: "Retrieves and displays ABC content",
+    widgetDomain: "https://example.com/abc",
+  };
+
   server.registerResource(
     "content-widget",
     contentWidget.templateUri,
@@ -63,6 +76,34 @@ const handler = createMcpHandler(async (server) => {
             "openai/widgetDescription": contentWidget.description,
             "openai/widgetPrefersBorder": true,
             "openai/widgetDomain": contentWidget.widgetDomain,
+          },
+        },
+      ],
+    })
+  );
+
+  server.registerResource(
+    "abc-widget",
+    abcWidget.templateUri,
+    {
+      title: abcWidget.title,
+      description: abcWidget.description,
+      mimeType: "text/html+skybridge",
+      _meta: {
+        "openai/widgetDescription": abcWidget.description,
+        "openai/widgetPrefersBorder": true,
+      },
+    },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: "text/html+skybridge",
+          text: `<html>${abcWidget.html}</html>`,
+          _meta: {
+            "openai/widgetDescription": abcWidget.description,
+            "openai/widgetPrefersBorder": true,
+            "openai/widgetDomain": abcWidget.widgetDomain,
           },
         },
       ],
@@ -93,7 +134,36 @@ const handler = createMcpHandler(async (server) => {
           name: name,
           timestamp: new Date().toISOString(),
         },
-        _meta: widgetMeta(contentWidget), // is this the UI?
+        _meta: widgetMeta(contentWidget),
+      };
+    }
+  );
+
+  server.registerTool(
+    abcWidget.id,
+    {
+      title: abcWidget.title,
+      description:
+        "Retrieve and display ABC content with optional query parameter",
+      inputSchema: {
+        query: z.string().optional().describe("Optional query parameter for ABC retrieval"),
+      },
+      _meta: widgetMeta(abcWidget),
+    },
+    async ({ query }) => {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `ABC data retrieved${query ? ` with query: ${query}` : ''}`,
+          },
+        ],
+        structuredContent: {
+          query: query || null,
+          data: "abc",
+          timestamp: new Date().toISOString(),
+        },
+        _meta: widgetMeta(abcWidget),
       };
     }
   );
